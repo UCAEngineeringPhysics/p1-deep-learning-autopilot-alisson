@@ -37,12 +37,12 @@ class AutopilotNet(nn.Module):
         # Define convolutional layers
         self.conv1 = nn.Conv2d(3, 24, kernel_size=(5, 5), stride=(2, 2))  # (176x208) -> (86x102)
         self.conv2 = nn.Conv2d(24, 32, kernel_size=(5, 5), stride=(2, 2))  # (86x102) -> (41x49)
-        self.conv3 = nn.Conv2d(32, 64, kernel_size=(5, 5), stride=(2, 2))  # (41x49) -> (18x22)
-        self.conv4 = nn.Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1))  # (18x22) -> (16x20)
+        self.conv3 = nn.Conv2d(32, 64, kernel_size=(5, 5), stride=(2, 2))  # (41x49) -> (19x23)
+        self.conv4 = nn.Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1))  # (19x23) -> (17x21)
         
         # Fully connected layers
-        # The size after convolutions: (64, 16, 20), so we need to calculate the number of input features for the first FC layer
-        self.fc1 = nn.Linear(64 * 16 * 20, 128)
+        # The size after convolutions: (64, 17, 21), so we need to calculate the number of input features for the first FC layer
+        self.fc1 = nn.Linear(64 * 17 * 21, 128)
         self.fc2 = nn.Linear(128, 128)
         self.fc3 = nn.Linear(128, 2)  # Output steering and throttle
 
@@ -69,4 +69,5 @@ class AutopilotNet(nn.Module):
 
         return x
 ### END CODING HERE ###
+
 
