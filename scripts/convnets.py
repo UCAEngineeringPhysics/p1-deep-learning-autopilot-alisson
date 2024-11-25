@@ -31,7 +31,7 @@ class DonkeyNet(nn.Module):
 
 
 ### START CODING HERE ###
-lass AutopilotNet(nn.Module):
+class AutopilotNet(nn.Module):
     def __init__(self):
         super().__init__()
         # Define convolutional layers
