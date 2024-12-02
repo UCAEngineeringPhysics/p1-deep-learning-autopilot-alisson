@@ -16,11 +16,11 @@ python ~/dlr/scripts/collect_data.py
 ```
 3. Transfer data
 ```bash
-rsync -rv --partial --progress ~/dlr/data/2024-11-12-13-14 user@192.168.0.111:~/dlr/data/
+rsync -rv --partial --progress ~/dlr/data/2024-11-12-13-14 user@192.168.0.112:~/dlr/data/
 ```
 4. Log in to server
 ```bash
-ssh user@192.168.0.111
+ssh user@192.168.0.112
 ```
 5. Train model
 ```bash
@@ -31,7 +31,7 @@ python ~/dlr/scripts/train.py 2024-11-12-13-14
 
 **Following example needs logging out from the server**.
 ```bash
-rsync -rv --partial --progress user@192.168.0.111:~/dlr/data/AutopilotNet-15epochs-0.001lr.pth ~/dlr/models
+rsync -rv --partial --progress user@192.168.0.112:~/dlr/data/2024-11-12-13-14/AutopilotNet-15epochs-0.001lr.pth ~/dlr/models/
 ```
 7. Deploy autopilot
 ```bash
