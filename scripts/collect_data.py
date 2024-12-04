@@ -10,34 +10,32 @@ import cv2 as cv
 from picamera2 import Picamera2
 from gpiozero import LED
 
-
 # SETUP
 # Load configs
 params_file_path = os.path.join(sys.path[0], 'configs.json')
-params_file = open(params_file_path)
-params = json.load(params_file)
+with open(params_file_path) as params_file:
+    params = json.load(params_file)
+
 # Constants
 STEERING_DIR = params['steering_dir']
 STEERING_AXIS = params['steering_joy_axis']
-STEERING_CENTER = params['steering_center']
-STEERING_RANGE = params['steering_range']
 THROTTLE_AXIS = params['throttle_joy_axis']
-THROTTLE_STALL = params['throttle_stall']
-THROTTLE_FWD_RANGE = params['throttle_fwd_range']
-THROTTLE_REV_RANGE = params['throttle_rev_range']
-THROTTLE_LIMIT = params['throttle_limit']
 RECORD_BUTTON = params['record_btn']
 STOP_BUTTON = params['stop_btn']
 # Init LED
 headlight = LED(params['led_pin'])
 headlight.off()
+
 # Init serial port
 ser_pico = serial.Serial(port='/dev/ttyACM0', baudrate=115200)
 print(f"Pico is connected to port: {ser_pico.name}")
+
 # Init controller
 pygame.display.init()
 pygame.joystick.init()
 js = pygame.joystick.Joystick(0)
+js.init()
+
 # Create data directory
 image_dir = os.path.join(
     os.path.dirname(sys.path[0]),
@@ -45,12 +43,9 @@ image_dir = os.path.join(
     'images/'
 )
 if not os.path.exists(image_dir):
-    try:
-        os.makedirs(image_dir)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
+    os.makedirs(image_dir)
 label_path = os.path.join(os.path.dirname(os.path.dirname(image_dir)), 'labels.csv')
+
 # Init camera
 cv.startWindowThread()
 cam = Picamera2()
@@ -63,8 +58,6 @@ cam.configure(
 cam.start()
 for i in reversed(range(72)):
     frame = cam.capture_array()
-    # cv.imshow("Camera", frame)
-    # cv.waitKey(1)
     if frame is None:
         print("No frame received. TERMINATE!")
         sys.exit()
@@ -82,7 +75,7 @@ is_recording = False
 # LOOP
 try:
     while True:
-        frame = cam.capture_array() # read image
+        frame = cam.capture_array()  # read image
         if frame is None:
             print("No frame received. TERMINATE!")
             headlight.close()
@@ -90,16 +83,17 @@ try:
             pygame.quit()
             ser_pico.close()
             sys.exit()
-        for e in pygame.event.get(): # read controller input
+
+        for e in pygame.event.get():  # read controller input
             if e.type == pygame.JOYAXISMOTION:
-                ax_val_st = round((js.get_axis(STEERING_AXIS)), 2)  # keep 2 decimals
-                ax_val_th = round((js.get_axis(THROTTLE_AXIS)), 2)  # keep 2 decimals
+                ax_val_st = round(js.get_axis(STEERING_AXIS), 2)  # keep 2 decimals
+                ax_val_th = round(js.get_axis(THROTTLE_AXIS), 2)  # keep 2 decimals
             elif e.type == pygame.JOYBUTTONDOWN:
                 if js.get_button(RECORD_BUTTON):
                     is_recording = not is_recording
                     print(f"Recording: {is_recording}")
                     headlight.toggle()
-                elif js.get_button(STOP_BUTTON): # emergency stop
+                elif js.get_button(STOP_BUTTON):  # emergency stop
                     print("E-STOP PRESSED. TERMINATE!")
                     headlight.off()
                     headlight.close()
@@ -121,24 +115,36 @@ try:
             duty_th = THROTTLE_STALL 
         msg = (str(duty_st) + "," + str(duty_th) + "\n").encode('utf-8')
         # Transmit control signals
+
+        # Calculate steering and throttle value
+#         act_st = ax_val_st  # steer action: -1: left, 1: right
+#         act_th = ax_val_th  # throttle action: -1: max backward, 1: max forward
+
+#         # Encode duty cycles in milliseconds
+#         duty_st = int((act_st + 1) * 500 + 1000)  # Example conversion
+#         duty_th = int((act_th + 1) * 500 + 1000)  # Example conversion
+
+#         msg = f"{duty_st},{duty_th}\n".encode('utf-8')
         ser_pico.write(msg)
+
         # Log data
         action = [act_st, act_th]
-        # print(f"action: {action}")
         if is_recording:
-            # img = cv.resize(frame, (176, 208))
             cv.imwrite(image_dir + str(frame_counts) + '.jpg', frame)
             label = [str(frame_counts) + '.jpg'] + action
             with open(label_path, 'a+', newline='') as f:
                 writer = csv.writer(f)
                 writer.writerow(label)
+
         frame_counts += 1
+
         # Log frame rate
         since_start = time() - start_stamp
         frame_rate = frame_counts / since_start
         print(f"frame rate: {frame_rate}")
+
         # Press "q" to quit
-        if cv.waitKey(1)==ord('q'):
+        if cv.waitKey(1) == ord('q'):
             headlight.off()
             headlight.close()
             cv.destroyAllWindows()
@@ -146,7 +152,7 @@ try:
             ser_pico.close()
             sys.exit()
 
-# Take care terminate signal (Ctrl-c)
+# Handle terminate signal (Ctrl-c)
 except KeyboardInterrupt:
     headlight.off()
     headlight.close()
