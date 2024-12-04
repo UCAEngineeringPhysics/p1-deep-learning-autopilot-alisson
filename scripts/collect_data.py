@@ -17,6 +17,7 @@ with open(params_file_path) as params_file:
     params = json.load(params_file)
 
 # Constants
+STEERING_DIR = params['steering_dir']
 STEERING_AXIS = params['steering_joy_axis']
 THROTTLE_AXIS = params['throttle_joy_axis']
 RECORD_BUTTON = params['record_btn']
@@ -51,28 +52,25 @@ cam = Picamera2()
 cam.configure(
     cam.create_preview_configuration(
         main={"format": 'RGB888', "size": (176, 208)},
-        controls={"FrameDurationLimits": (50000, 50000)},  # 20 FPS
+        controls={"FrameDurationLimits": (41667, 41667)},  # 24 FPS
     )
 )
 cam.start()
-
-# Init timer for FPS computing
-start_stamp = time()
-frame_counts = 0
-
-# Init variables
-ax_val_st = 0.0  # center steering
-ax_val_th = 0.0  # shut throttle
-is_recording = False
-
-# Countdown for camera warm-up
-for i in reversed(range(60)):
+for i in reversed(range(72)):
     frame = cam.capture_array()
     if frame is None:
         print("No frame received. TERMINATE!")
         sys.exit()
-    if not i % 20:
-        print(i // 20)  # count down 3, 2, 1 sec
+    if not i % 24:
+        print(i/24)  # count down 3, 2, 1 sec
+# Init timer for FPS computing
+start_stamp = time()
+frame_counts = 0
+ave_frame_rate = 0.
+# Init variables
+ax_val_st = 0. # center steering
+ax_val_th = 0. # shut throttle
+is_recording = False
 
 # LOOP
 try:
@@ -103,16 +101,30 @@ try:
                     pygame.quit()
                     ser_pico.close()
                     sys.exit()
+        # Calaculate steering and throttle value
+        act_st = ax_val_st * STEERING_DIR  # steer action: -1: left, 1: right
+        act_th = -ax_val_th  # throttle action: -1: max forward, 1: max backward
+        # Encode steering value to dutycycle in nanosecond
+        duty_st = STEERING_CENTER - STEERING_RANGE + int(STEERING_RANGE * (act_st + 1))
+        # Encode throttle value to dutycycle in nanosecond
+        if act_th > 0:
+            duty_th = THROTTLE_STALL + int(THROTTLE_FWD_RANGE * min(act_th, THROTTLE_LIMIT))
+        elif act_th < 0:
+            duty_th = THROTTLE_STALL + int(THROTTLE_REV_RANGE * max(act_th, -THROTTLE_LIMIT))
+        else:
+            duty_th = THROTTLE_STALL 
+        msg = (str(duty_st) + "," + str(duty_th) + "\n").encode('utf-8')
+        # Transmit control signals
 
         # Calculate steering and throttle value
-        act_st = ax_val_st  # steer action: -1: left, 1: right
-        act_th = ax_val_th  # throttle action: -1: max backward, 1: max forward
+#         act_st = ax_val_st  # steer action: -1: left, 1: right
+#         act_th = ax_val_th  # throttle action: -1: max backward, 1: max forward
 
-        # Encode duty cycles in milliseconds
-        duty_st = int((act_st + 1) * 500 + 1000)  # Example conversion
-        duty_th = int((act_th + 1) * 500 + 1000)  # Example conversion
+#         # Encode duty cycles in milliseconds
+#         duty_st = int((act_st + 1) * 500 + 1000)  # Example conversion
+#         duty_th = int((act_th + 1) * 500 + 1000)  # Example conversion
 
-        msg = f"{duty_st},{duty_th}\n".encode('utf-8')
+#         msg = f"{duty_st},{duty_th}\n".encode('utf-8')
         ser_pico.write(msg)
 
         # Log data

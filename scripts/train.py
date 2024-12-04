@@ -84,24 +84,26 @@ bearcart_dataset = BearCartDataset(annotations_file, img_dir)
 print(f"data length: {len(bearcart_dataset)}")
 
 # Create training dataloader and test dataloader
-train_size = round(len(bearcart_dataset)*0.9)
+train_size = round(len(bearcart_dataset)*0.925)
 test_size = len(bearcart_dataset) - train_size
 print(f"train size: {train_size}, test size: {test_size}")
 train_data, test_data = random_split(bearcart_dataset, [train_size, test_size])
-train_dataloader = DataLoader(train_data, batch_size=125)
-test_dataloader = DataLoader(test_data, batch_size=125)
+train_dataloader = DataLoader(train_data, batch_size=128)
+test_dataloader = DataLoader(test_data, batch_size=128)
 
 # Create model - Pass in image size
 model = convnets.AutopilotNet().to(DEVICE)  # choose the architecture class from cnn_network.py
-# Hyper-parameters (lr=0.001, epochs=10 | lr=0.0001, epochs=15 or 20)
+# Hyper-parameters
 lr = 0.001
-optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0.0001)
-# scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.8)
+optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 loss_fn = nn.MSELoss()
-epochs = 15 # switch back to 15 epochs
-# Optimize the model
+epochs = 50
+patience = 7
+best_loss = float('inf')  # best loss on test data
+best_counter = 0
 train_losses = []
 test_losses = []
+# Optimize the model
 for t in range(epochs):
     print(f"Epoch {t+1}\n-------------------------------")
     ep_train_loss = train(train_dataloader, model, loss_fn, optimizer)
@@ -112,15 +114,23 @@ for t in range(epochs):
     # save values
     train_losses.append(ep_train_loss)
     test_losses.append(ep_test_loss)
-    # Apply the learning rate scheduler after each epoch
-    # scheduler.step()
+    # Early stopping logic
+    if ep_test_loss < best_loss:
+        best_loss = ep_test_loss
+        best_counter = 0  # Reset counter if validation loss improved
+    else:
+        best_counter += 1
+        if best_counter >= patience:
+            print("Early stopping triggered!")
+            break
+
 
 print("Optimize Done!")
 
 # Graph training process
 pilot_title = f'{model._get_name()}-{epochs}epochs-{lr}lr'
-plt.plot(range(epochs), train_losses, 'b--', label='Training')
-plt.plot(range(epochs), test_losses, 'orange', label='Test')
+plt.plot(range(len(train_losses)), train_losses, 'b--', label='Training')
+plt.plot(range(len(test_losses)), test_losses, 'orange', label='Test')
 plt.xlabel('Epoch')
 plt.ylabel('MSE Loss')
 plt.legend()
