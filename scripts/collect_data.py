@@ -17,9 +17,14 @@ with open(params_file_path) as params_file:
     params = json.load(params_file)
 
 # Constants
-STEERING_DIR = params['steering_dir']
 STEERING_AXIS = params['steering_joy_axis']
+STEERING_CENTER = params['steering_center']
+STEERING_RANGE = params['steering_range']
 THROTTLE_AXIS = params['throttle_joy_axis']
+THROTTLE_STALL = params['throttle_stall']
+THROTTLE_FWD_RANGE = params['throttle_fwd_range']
+THROTTLE_REV_RANGE = params['throttle_rev_range']
+THROTTLE_LIMIT = params['throttle_limit']
 RECORD_BUTTON = params['record_btn']
 STOP_BUTTON = params['stop_btn']
 # Init LED
