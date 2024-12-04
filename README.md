@@ -1,3 +1,4 @@
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/ZBaC74ep)
 # Final Project - Deep Learning Autopilot
 ## Objectives
 - Develop a deep learning autopilot model based on convolutional neural networks.
@@ -15,11 +16,11 @@ python ~/dlr/scripts/collect_data.py
 ```
 3. Transfer data
 ```bash
-rsync -rv --partial --progress ~/dlr/data/2024-11-12-13-14 user@192.168.0.111:~/dlr/data/
+rsync -rv --partial --progress ~/dlr/data/2024-11-12-13-14 user@192.168.0.112:~/dlr/data/
 ```
 4. Log in to server
 ```bash
-ssh user@192.168.0.111
+ssh user@192.168.0.112
 ```
 5. Train model
 ```bash
@@ -30,7 +31,8 @@ python ~/dlr/scripts/train.py 2024-11-12-13-14
 
 **Following example needs logging out from the server**.
 ```bash
-rsync -rv --partial --progress user@192.168.0.111:~/dlr/data/AutopilotNet-15epochs-0.001lr.pth ~/dlr/models
+rsync -rv --partial --progress user@192.168.0.112:~/dlr/data/2024-11-12-13-14/*.pth ~/dlr/models/pilot.pth
+rsync -rv --partial --progress user@192.168.0.112:~/dlr/data/2024-11-12-13-14/*.png ~/dlr/models/  # optional
 ```
 7. Deploy autopilot
 ```bash
