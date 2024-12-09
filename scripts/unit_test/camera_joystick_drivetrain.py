@@ -18,6 +18,7 @@ params_file_path = os.path.join(os.path.dirname(sys.path[0]), 'configs.json')
 params_file = open(params_file_path)
 params = json.load(params_file)
 # Constants
+STEERING_DIR = params['steering_dir']
 STEERING_AXIS = params['steering_joy_axis']
 STEERING_CENTER = params['steering_center']
 STEERING_RANGE = params['steering_range']
@@ -44,7 +45,7 @@ cam = Picamera2()
 cam.configure(
     cam.create_preview_configuration(
         main={"format": 'RGB888', "size": (176, 208)},
-        controls={"FrameDurationLimits": (50000, 50000)},  # 20 FPS
+        controls={"FrameDurationLimits": (41667, 41667)},  # 24 FPS
     )
 )
 cam.start()
@@ -93,7 +94,7 @@ try:
                     ser_pico.close()
                     sys.exit()
         # Calaculate steering and throttle value
-        act_st = ax_val_st
+        act_st = ax_val_st * STEERING_DIR
         act_th = -ax_val_th # throttle action: -1: max forward, 1: max backward
         # Encode steering value to dutycycle in nanosecond
         duty_st = STEERING_CENTER - STEERING_RANGE + int(STEERING_RANGE * (act_st + 1))

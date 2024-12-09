@@ -17,7 +17,7 @@ from gpiozero import LED
 model_path = os.path.join(
     os.path.dirname(sys.path[0]),
     'models', 
-    'AutopilotNet-15epochs-0.001lr.pth'
+    'pilot.pth'
 )
 to_tensor = transforms.ToTensor()
 model = convnets.AutopilotNet()
@@ -52,19 +52,19 @@ cam = Picamera2()
 cam.configure(
     cam.create_preview_configuration(
         main={"format": 'RGB888', "size": (176, 208)},
-        controls={"FrameDurationLimits": (50000, 50000)},  # 20 FPS
+        controls={"FrameDurationLimits": (41667, 41667)},  # 24 FPS
     )
 )
 cam.start()
-for i in reversed(range(60)):
+for i in reversed(range(72)):
     frame = cam.capture_array()
     # cv.imshow("Camera", frame)
     # cv.waitKey(1)
     if frame is None:
         print("No frame received. TERMINATE!")
         sys.exit()
-    if not i % 20:
-        print(i/20)  # count down 3, 2, 1 sec  
+    if not i % 24:
+        print(i/24)  # count down 3, 2, 1 sec  
 # Init timer for FPS computing
 start_stamp = time()
 frame_counts = 0
