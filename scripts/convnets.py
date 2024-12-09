@@ -32,21 +32,21 @@ class DonkeyNet(nn.Module):
 
 ### START CODING HERE ###
 class AutopilotNet(nn.Module):
-
     def __init__(self):
         super().__init__()
         # Define convolutional layers
         self.conv1 = nn.Conv2d(3, 24, kernel_size=(5, 5), stride=(2, 2))  # (176x208) -> (86x102)
         self.conv2 = nn.Conv2d(24, 32, kernel_size=(5, 5), stride=(2, 2))  # (86x102) -> (41x49)
         self.conv3 = nn.Conv2d(32, 64, kernel_size=(5, 5), stride=(2, 2))  # (41x49) -> (19x23)
-        self.conv4 = nn.Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1))  # (19x23) -> (17x21)
+        self.conv4 = nn.Conv2d(64, 64, kernel_size=(3, 3), stride=(2, 2))  # (19x23) -> (17x21)
+        self.conv5 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
         
         # Fully connected layers
         # The size after convolutions: (64, 17, 21), so we need to calculate the number of input features for the first FC layer
-        self.fc1 = nn.Linear(64 * 17 * 21, 128)
+        self.fc1 = nn.Linear(64 * 7 * 9, 128)
         self.fc2 = nn.Linear(128, 128)
         self.fc3 = nn.Linear(128, 2)  # Output steering and throttle
-
+        
         # Activation function
         self.relu = nn.ReLU()
         self.flatten = nn.Flatten()
@@ -57,7 +57,8 @@ class AutopilotNet(nn.Module):
         x = self.relu(self.conv2(x))  # Output size: (batch_size, 32, 41, 49)
         x = self.relu(self.conv3(x))  # Output size: (batch_size, 64, 18, 22)
         x = self.relu(self.conv4(x))  # Output size: (batch_size, 64, 16, 20)
-
+        x = self.relu(self.conv5(x))
+        
         # Flatten the output from the conv layers
         x = self.flatten(x)  # Flatten to (batch_size, 64 * 16 * 20)
 
@@ -70,5 +71,3 @@ class AutopilotNet(nn.Module):
 
         return x
 ### END CODING HERE ###
-
-
